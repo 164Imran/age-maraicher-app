@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AGE — App Maraîcher</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --earth:#5C3D1E;--earth-mid:#8B5E3C;--earth-light:#C8956A;
+  --sand:#E8D5B7;--sand-light:#F5ECD9;
+  --water:#2E6B8A;--water-mid:#4A9BBF;--water-light:#A8D4E8;
+  --leaf:#4A7C3F;--leaf-light:#7AAD6E;--leaf-bg:#EAF5E6;
+  --cream:#FAF6F0;--warn:#BA7517;--warn-bg:#FAEEDA;
+  --danger:#A32D2D;--danger-bg:#FCEBEB;
+  --bg-primary:#ffffff;--bg-secondary:#f5f5f5;
+  --text-primary:#1a1a1a;--text-secondary:#6b6b6b;
+  --border:#e5e5e5;
+}
+body{font-family:system-ui,-apple-system,sans-serif;background:#e0e0e0;color:var(--text-primary);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem}
+
+.phone-shell{
+  max-width:390px;width:100%;
+  background:#1a1a1a;border-radius:44px;
+  padding:12px;
+  box-shadow:0 24px 48px rgba(0,0,0,0.35);
+}
+.phone-screen{
+  background:var(--cream);border-radius:34px;overflow:hidden;
+  height:780px;display:flex;flex-direction:column;
+}
+
+.status-bar{
+  background:var(--earth);padding:10px 20px 6px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.status-time{color:var(--sand);font-size:13px;font-weight:500}
+.status-icons{display:flex;gap:6px;align-items:center}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--water-light)}
+
+.top-bar{background:var(--earth);padding:12px 20px 18px}
+.top-greeting{color:rgba(232,213,183,0.7);font-size:12px;margin-bottom:2px}
+.top-name{color:var(--sand);font-size:18px;font-weight:500}
+.top-meta{color:rgba(168,212,232,0.9);font-size:12px;margin-top:4px}
+
+.content{flex:1;overflow-y:auto;padding:16px}
+
+.screen{display:none}
+.screen.active{display:block}
+
+.section-label{
+  font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--earth-mid);font-weight:500;margin-bottom:10px;margin-top:18px;
+}
+.section-label:first-child{margin-top:0}
+
+.metric-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.metric-card{
+  background:var(--bg-primary);
+  border-radius:14px;padding:14px 12px;
+  border:0.5px solid var(--border);
+}
+.metric-card.full{grid-column:span 2}
+.metric-card.earth{background:var(--earth)}
+.metric-card.water{background:var(--water)}
+.metric-card.leaf{background:var(--leaf-bg)}
+
+.metric-icon{font-size:18px;margin-bottom:6px;display:block}
+.metric-label{font-size:11px;color:var(--text-secondary);margin-bottom:4px}
+.metric-label.light{color:rgba(232,213,183,0.7)}
+.metric-value{font-size:22px;font-weight:500;line-height:1;color:var(--text-primary)}
+.metric-value.light{color:var(--sand)}
+.metric-value.water{color:var(--water-light)}
+.metric-sub{font-size:11px;color:var(--text-secondary);margin-top:3px}
+.metric-sub.good{color:var(--leaf)}
+.metric-sub.light{color:rgba(232,213,183,0.55)}
+
+.alert-card{
+  border-radius:12px;padding:12px 14px;margin-bottom:10px;
+  display:flex;align-items:flex-start;gap:10px;
+  border:0.5px solid var(--border);
+}
+.alert-card.warn{background:var(--warn-bg);border-color:rgba(186,117,23,.2)}
+.alert-card.ok{background:var(--leaf-bg);border-color:rgba(74,124,63,.2)}
+.alert-card.info{background:#E6F1FB;border-color:rgba(24,95,165,.2)}
+.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.alert-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.alert-card.warn .alert-title{color:#633806}
+.alert-card.ok .alert-title{color:#27500A}
+.alert-card.info .alert-title{color:#0C447C}
+.alert-body{font-size:12px}
+.alert-card.warn .alert-body{color:#854F0B}
+.alert-card.ok .alert-body{color:#3B6D11}
+.alert-card.info .alert-body{color:#185FA5}
+
+.bar-chart{margin-bottom:16px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-lbl{font-size:12px;color:var(--text-secondary);width:32px;flex-shrink:0}
+.bar-track{flex:1;height:10px;background:var(--bg-secondary);border-radius:100px;overflow:hidden}
+.bar-fill{height:100%;border-radius:100px}
+.bar-val{font-size:12px;font-weight:500;width:54px;text-align:right;color:var(--text-primary)}
+
+.progress-ring-wrap{display:flex;justify-content:center;padding:8px 0 4px}
+.ring-center{position:relative;width:120px;height:120px}
+.ring-center svg{transform:rotate(-90deg)}
+.ring-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.ring-label .big{font-size:22px;font-weight:500;color:var(--water);display:block}
+.ring-label .small{font-size:11px;color:var(--text-secondary)}
+
+.leasing-timeline{margin:8px 0 16px}
+.lt-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lt-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.lt-dot.paid{background:var(--leaf)}
+.lt-dot.current{background:var(--water);outline:2px solid var(--water-light);outline-offset:2px}
+.lt-dot.future{background:var(--border)}
+.lt-line{width:2px;height:14px;background:var(--border);margin-left:4px;margin-bottom:4px}
+.lt-text{font-size:13px;color:var(--text-primary)}
+.lt-sub{font-size:11px;color:var(--text-secondary)}
+.lt-badge{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;white-space:nowrap}
+.lt-badge.paid{background:var(--leaf-bg);color:#27500A}
+.lt-badge.current{background:#E6F1FB;color:#0C447C}
+.lt-badge.future{background:var(--bg-secondary);color:var(--text-secondary)}
+
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:block}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.custom-input{
+  width:100%;background:var(--bg-primary);
+  border:0.5px solid #ccc;
+  border-radius:10px;padding:10px 12px;
+  font-size:14px;color:var(--text-primary);
+  font-family:inherit;
+}
+.custom-input:focus{outline:none;border-color:var(--water)}
+
+.big-btn{
+  width:100%;background:var(--water);color:#fff;
+  border:none;border-radius:12px;padding:14px;
+  font-size:15px;font-weight:500;font-family:inherit;cursor:pointer;
+  margin-top:4px;
+}
+.big-btn:active{opacity:.88}
+.big-btn.earth{background:var(--earth)}
+.big-btn.leaf{background:var(--leaf)}
+.big-btn.outline{background:var(--bg-primary);color:var(--earth);border:0.5px solid var(--earth)}
+
+.log-item{
+  background:var(--bg-primary);
+  border:0.5px solid var(--border);
+  border-radius:12px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;margin-bottom:8px;
+}
+.log-icon-wrap{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.log-title{font-size:13px;font-weight:500;color:var(--text-primary)}
+.log-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.log-amount{margin-left:auto;font-size:14px;font-weight:500;white-space:nowrap}
+.log-amount.good{color:var(--leaf)}
+.log-amount.bad{color:var(--danger)}
+.log-amount.warn{color:var(--warn)}
+
+.nav-bar{
+  background:var(--bg-primary);
+  border-top:0.5px solid var(--border);
+  display:flex;justify-content:space-around;padding:8px 0 10px;
+}
+.nav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:none;cursor:pointer;padding:4px 12px;
+  border-radius:10px;
+}
+.nav-btn svg{width:22px;height:22px;stroke:var(--text-secondary);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn span{font-size:10px;color:var(--text-secondary);font-family:inherit}
+.nav-btn.active span{color:var(--water);font-weight:500}
+.nav-btn.active svg{stroke:var(--water)}
+
+.profile-card{
+  background:var(--bg-primary);border:0.5px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:14px;
+  display:flex;align-items:center;gap:14px;
+}
+.avatar{
+  width:52px;height:52px;border-radius:50%;background:var(--earth);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:var(--sand);font-weight:500;flex-shrink:0;
+}
+
+/* ── Accueil restructuré ── */
+.home-hero{
+  background:linear-gradient(135deg,var(--earth) 0%,var(--earth-mid) 100%);
+  border-radius:16px;padding:16px;margin-bottom:12px;
+  display:flex;justify-content:space-between;align-items:flex-end;
+}
+.home-hero-tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(232,213,183,.6);margin-bottom:6px}
+.home-hero-amount{font-size:28px;font-weight:600;color:var(--sand);line-height:1}
+.home-hero-unit{font-size:13px;font-weight:400;color:rgba(232,213,183,.8)}
+.home-hero-sub{font-size:12px;color:rgba(168,212,232,.85);margin-top:6px}
+.home-hero-badge{
+  font-size:10px;background:rgba(255,255,255,.12);color:var(--sand);
+  border-radius:100px;padding:3px 10px;display:inline-block;margin-top:8px;
+}
+.home-hero-icon{font-size:40px;opacity:.85;padding-bottom:4px}
+
+.stat-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-mini{background:var(--bg-primary);border:0.5px solid var(--border);border-radius:12px;padding:10px 8px}
+.stat-mini-icon{font-size:14px;margin-bottom:4px}
+.stat-mini-val{font-size:15px;font-weight:600;color:var(--text-primary);line-height:1}
+.stat-mini-lbl{font-size:10px;color:var(--text-secondary);margin-top:3px}
+.stat-mini-prog{height:3px;border-radius:100px;background:var(--bg-secondary);margin-top:7px;overflow:hidden}
+.stat-mini-prog-fill{height:100%;border-radius:100px}
+
+.alert-row{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 12px;border-radius:10px;margin-bottom:6px;
+  border:0.5px solid var(--border);
+}
+.alert-row.warn{background:var(--warn-bg);border-color:rgba(186,117,23,.2)}
+.alert-row.ok{background:var(--leaf-bg);border-color:rgba(74,124,63,.2)}
+.alert-row.info{background:#E6F1FB;border-color:rgba(24,95,165,.2)}
+.alert-row-icon{font-size:14px;flex-shrink:0}
+.alert-row-text{flex:1;min-width:0}
+.alert-row-title{font-size:12px;font-weight:500}
+.alert-row.warn .alert-row-title{color:#633806}
+.alert-row.ok  .alert-row-title{color:#27500A}
+.alert-row.info .alert-row-title{color:#0C447C}
+.alert-row-sub{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-row.warn .alert-row-sub{color:#854F0B}
+.alert-row.ok  .alert-row-sub{color:#3B6D11}
+.alert-row.info .alert-row-sub{color:#185FA5}
+
+.col-chart{display:flex;align-items:flex-end;gap:5px;height:68px;margin-bottom:4px}
+.col-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.col-bar-track{flex:1;width:100%;display:flex;align-items:flex-end}
+.col-bar{width:100%;border-radius:4px 4px 0 0;min-height:4px}
+.col-lbl{font-size:9px;color:var(--text-secondary)}
+.col-footer{display:flex;justify-content:space-between;font-size:10px;color:var(--text-secondary);margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+<div class="phone-screen">
+
+  <div class="status-bar">
+    <span class="status-time">9:41</span>
+    <div class="status-icons">
+      <div class="status-dot"></div>
+      <div class="status-dot"></div>
+      <div class="status-dot"></div>
+    </div>
+  </div>
+
+  <div class="top-bar">
+    <div class="top-greeting">Bom dia, Pedro 👋</div>
+    <div class="top-name">Mon exploitation</div>
+    <div class="top-meta">Caála, Huambo · Kit AGE 1ha · Pay-As-You-Go</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ACCUEIL -->
+    <div class="screen active" id="screen-home">
+
+      <!-- Hero économies -->
+      <div class="home-hero">
+        <div>
+          <div class="home-hero-tag">Économies ce mois</div>
+          <div class="home-hero-amount">42 500 <span class="home-hero-unit">AOA</span></div>
+          <div class="home-hero-sub">vs diesel : −41 000 AOA économisés</div>
+          <div class="home-hero-badge">✓ Panneaux · Pompe · Chambre froide · 47j</div>
+        </div>
+        <div class="home-hero-icon">🌱</div>
+      </div>
+
+      <!-- 3 stats rapides -->
+      <div class="stat-3col">
+        <div class="stat-mini">
+          <div class="stat-mini-icon">💧</div>
+          <div class="stat-mini-val">4 200<span style="font-size:10px;font-weight:400"> L</span></div>
+          <div class="stat-mini-lbl">Eau pompée</div>
+          <div class="stat-mini-prog"><div class="stat-mini-prog-fill" style="width:93%;background:var(--water-mid)"></div></div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon">☀️</div>
+          <div class="stat-mini-val">18,4<span style="font-size:10px;font-weight:400"> kWh</span></div>
+          <div class="stat-mini-lbl">Énergie solaire</div>
+          <div class="stat-mini-prog"><div class="stat-mini-prog-fill" style="width:82%;background:var(--earth-light)"></div></div>
+        </div>
+        <div class="stat-mini">
+          <div class="stat-mini-icon">📅</div>
+          <div class="stat-mini-val">5<span style="font-size:10px;font-weight:400"> j</span></div>
+          <div class="stat-mini-lbl">Paiement dû</div>
+          <div class="stat-mini-prog"><div class="stat-mini-prog-fill" style="width:33%;background:var(--warn)"></div></div>
+        </div>
+      </div>
+
+      <!-- Alertes compactes -->
+      <div class="section-label">Alertes</div>
+      <div class="alert-row ok">
+        <div class="alert-row-icon">✅</div>
+        <div class="alert-row-text">
+          <div class="alert-row-title">Pompe opérationnelle</div>
+          <div class="alert-row-sub">Fonctionnement normal depuis 47 jours</div>
+        </div>
+      </div>
+      <div class="alert-row warn">
+        <div class="alert-row-icon">⚠️</div>
+        <div class="alert-row-text">
+          <div class="alert-row-title">Paiement dans 5 jours</div>
+          <div class="alert-row-sub">8 500 AOA via Unitel Money — 7 avril</div>
+        </div>
+      </div>
+      <div class="alert-row warn">
+        <div class="alert-row-icon">🌡️</div>
+        <div class="alert-row-text">
+          <div class="alert-row-title">Stress thermique — T° max 34°C</div>
+          <div class="alert-row-sub">Irriguer avant 7h · risque brûlures cultures</div>
+        </div>
+      </div>
+      <div class="alert-row ok">
+        <div class="alert-row-icon">🔒</div>
+        <div class="alert-row-text">
+          <div class="alert-row-title">Kit sécurisé</div>
+          <div class="alert-row-sub">Aucune alerte détection · capteur actif</div>
+        </div>
+      </div>
+
+      <!-- Graphique en colonnes -->
+      <div class="section-label">Irrigation cette semaine</div>
+      <div class="col-chart">
+        <div class="col-wrap"><div class="col-bar-track"><div class="col-bar" style="height:88%;background:var(--water-mid)"></div></div><div class="col-lbl">Lun</div></div>
+        <div class="col-wrap"><div class="col-bar-track"><div class="col-bar" style="height:95%;background:var(--water-mid)"></div></div><div class="col-lbl">Mar</div></div>
+        <div class="col-wrap"><div class="col-bar-track"><div class="col-bar" style="height:100%;background:var(--water)"></div></div><div class="col-lbl">Mer</div></div>
+        <div class="col-wrap"><div class="col-bar-track"><div class="col-bar" style="height:91%;background:var(--water-mid)"></div></div><div class="col-lbl">Jeu</div></div>
+        <div class="col-wrap"><div class="col-bar-track"><div class="col-bar" style="height:79%;background:var(--water-light)"></div></div><div class="col-lbl">Ven</div></div>
+        <div class="col-wrap"><div class="col-bar-track"><div class="col-bar" style="height:83%;background:var(--water-light)"></div></div><div class="col-lbl">Sam</div></div>
+        <div class="col-wrap"><div class="col-bar-track"><div class="col-bar" style="height:93%;background:var(--water);box-shadow:0 0 0 2px var(--water-light)"></div></div><div class="col-lbl" style="color:var(--water);font-weight:600">Auj.</div></div>
+      </div>
+      <div class="col-footer"><span>Moy. 4 046 L/j</span><span style="color:var(--water);font-weight:500">Auj. 4 200 L ↑</span></div>
+
+    </div>
+
+    <!-- LEASING -->
+    <div class="screen" id="screen-leasing">
+
+      <div class="section-label">Mon leasing AGE</div>
+
+      <div class="alert-card info" style="margin-bottom:14px">
+        <div class="alert-icon">💡</div>
+        <div>
+          <div class="alert-title">Modèle Pay-As-You-Go</div>
+          <div class="alert-body">Aucun apport initial. 8 500 AOA/mois — soit 5× moins qu'une dépense diesel mensuelle. En cas de panne, les mensualités sont suspendues jusqu'à réparation.</div>
+        </div>
+      </div>
+
+      <div class="progress-ring-wrap">
+        <div class="ring-center">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#E8D5B7" stroke-width="10"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#2E6B8A" stroke-width="10"
+              stroke-dasharray="314" stroke-dashoffset="188" stroke-linecap="round"/>
+          </svg>
+          <div class="ring-label">
+            <span class="big">40%</span>
+            <span class="small">remboursé</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-row" style="margin-bottom:14px">
+        <div class="metric-card">
+          <div class="metric-label">Total kit</div>
+          <div class="metric-value" style="font-size:16px">212 500 AOA</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Restant</div>
+          <div class="metric-value" style="font-size:16px;color:var(--water)">127 500 AOA</div>
+        </div>
+      </div>
+
+      <div class="section-label">Historique des paiements</div>
+      <div class="leasing-timeline">
+        <div class="lt-row">
+          <div class="lt-dot paid"></div>
+          <div><div class="lt-text">Janvier 2025</div><div class="lt-sub">8 500 AOA</div></div>
+          <span class="lt-badge paid">Payé</span>
+        </div>
+        <div class="lt-line"></div>
+        <div class="lt-row">
+          <div class="lt-dot paid"></div>
+          <div><div class="lt-text">Février 2025</div><div class="lt-sub">8 500 AOA</div></div>
+          <span class="lt-badge paid">Payé</span>
+        </div>
+        <div class="lt-line"></div>
+        <div class="lt-row">
+          <div class="lt-dot paid"></div>
+          <div><div class="lt-text">Mars 2025</div><div class="lt-sub">8 500 AOA</div></div>
+          <span class="lt-badge paid">Payé</span>
+        </div>
+        <div class="lt-line"></div>
+        <div class="lt-row">
+          <div class="lt-dot current"></div>
+          <div><div class="lt-text">Avril 2025</div><div class="lt-sub">8 500 AOA · dû le 7 avril</div></div>
+          <span class="lt-badge current">En cours</span>
+        </div>
+        <div class="lt-line"></div>
+        <div class="lt-row">
+          <div class="lt-dot future"></div>
+          <div><div class="lt-text">Mai → Déc 2025</div><div class="lt-sub">8 paiements restants</div></div>
+          <span class="lt-badge future">À venir</span>
+        </div>
+      </div>
+
+      <button class="big-btn" id="pay-btn" onclick="showPayModal()">Payer maintenant via Unitel</button>
+
+      <div id="pay-modal" style="display:none;margin-top:14px">
+        <div style="background:var(--bg-primary);border:0.5px solid var(--border);border-radius:14px;padding:16px">
+          <div style="font-size:14px;font-weight:500;margin-bottom:10px">Confirmer le paiement</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">Montant</div>
+          <div style="font-size:22px;font-weight:500;color:var(--water);margin-bottom:14px">8 500 AOA</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px">Mode de paiement</div>
+          <select class="custom-input" id="pay-method" style="margin-bottom:10px" onchange="updatePayLabel()">
+            <option value="unitel">Unitel Money</option>
+            <option value="bai">BAI Directo</option>
+          </select>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px" id="pay-num-label">Numéro Unitel Money</div>
+          <input class="custom-input" type="tel" placeholder="924 XXX XXX" id="pay-num" style="margin-bottom:14px">
+          <button class="big-btn leaf" onclick="confirmPay()">Confirmer</button>
+        </div>
+      </div>
+
+      <div id="pay-success" style="display:none;margin-top:14px">
+        <div class="alert-card ok">
+          <div class="alert-icon">✅</div>
+          <div>
+            <div class="alert-title">Paiement confirmé</div>
+            <div class="alert-body">8 500 AOA reçus. Prochain: 7 mai 2025.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PARCELLE -->
+    <div class="screen" id="screen-parcelle">
+
+      <div class="section-label">Mes cultures</div>
+
+      <div id="cultures-list">
+        <div class="log-item">
+          <div class="log-icon-wrap" style="background:#EAF5E6">🥬</div>
+          <div><div class="log-title">Choux & salades</div><div class="log-sub">0,4 ha · semé il y a 18 jours</div></div>
+          <div class="log-amount good">+12%</div>
+        </div>
+        <div class="log-item">
+          <div class="log-icon-wrap" style="background:#FFF5E6">🍅</div>
+          <div><div class="log-title">Tomates</div><div class="log-sub">0,3 ha · floraison en cours</div></div>
+          <div class="log-amount good">Normal</div>
+        </div>
+        <div class="log-item">
+          <div class="log-icon-wrap" style="background:#E6F1FB">🧅</div>
+          <div><div class="log-title">Oignons</div><div class="log-sub">0,3 ha · récolte dans 14 jours</div></div>
+          <div class="log-amount warn">Vérifier</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px">Ajouter une culture</div>
+      <div style="background:var(--bg-primary);border:0.5px solid var(--border);border-radius:14px;padding:16px">
+        <div class="form-group">
+          <label class="form-label">Type de culture</label>
+          <select class="custom-input" id="new-culture">
+            <option value="">Choisir...</option>
+            <option>Tomates</option>
+            <option>Choux</option>
+            <option>Oignons</option>
+            <option>Maïs</option>
+            <option>Haricots</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Surface (ha)</label>
+            <input class="custom-input" type="number" placeholder="0.1" step="0.1" min="0.1" id="new-ha">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date semis</label>
+            <input class="custom-input" type="date" id="new-date">
+          </div>
+        </div>
+        <button class="big-btn leaf" onclick="addCulture()">Ajouter la culture</button>
+      </div>
+
+      <div class="section-label" style="margin-top:20px">Récoltes & Ventes marché</div>
+      <div id="ventes-list">
+        <div class="log-item">
+          <div class="log-icon-wrap" style="background:#EAF5E6">🥬</div>
+          <div><div class="log-title">Choux — marché Caála</div><div class="log-sub">32 kg · 1er avril 2025</div></div>
+          <div class="log-amount good">+9 600</div>
+        </div>
+        <div class="log-item">
+          <div class="log-icon-wrap" style="background:#FFF5E6">🍅</div>
+          <div><div class="log-title">Tomates — marché Caála</div><div class="log-sub">18 kg · 28 mars 2025</div></div>
+          <div class="log-amount good">+7 200</div>
+        </div>
+      </div>
+      <div style="background:var(--bg-primary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-top:10px">
+        <div class="form-group">
+          <label class="form-label">Culture vendue</label>
+          <select class="custom-input" id="vente-culture">
+            <option value="">Choisir...</option>
+            <option>Tomates</option>
+            <option>Choux</option>
+            <option>Oignons</option>
+            <option>Maïs</option>
+            <option>Haricots</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Quantité (kg)</label>
+            <input class="custom-input" type="number" placeholder="0" id="vente-kg">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prix total (AOA)</label>
+            <input class="custom-input" type="number" placeholder="0" id="vente-aoa">
+          </div>
+        </div>
+        <button class="big-btn" style="background:var(--earth)" onclick="addVente()">Enregistrer la vente</button>
+      </div>
+
+    </div>
+
+    <!-- COMPTE -->
+    <div class="screen" id="screen-compte">
+
+      <div class="section-label">Mon compte AGE</div>
+
+      <div class="profile-card">
+        <div class="avatar">PK</div>
+        <div>
+          <div style="font-size:16px;font-weight:500">Pedro Kissanga</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">Caála, Huambo · Client depuis janv. 2025</div>
+          <div style="font-size:12px;color:var(--leaf);margin-top:2px">✓ Kit AGE 1ha · actif</div>
+        </div>
+      </div>
+
+      <div class="section-label">Mon Kit AGE</div>
+      <div class="log-item">
+        <div class="log-icon-wrap" style="background:#FAEEDA">☀️</div>
+        <div><div class="log-title">Panneau solaire</div><div class="log-sub">600 Wc · installé janv. 2025</div></div>
+        <div class="log-amount" style="color:var(--leaf)">✓ Actif</div>
+      </div>
+      <div class="log-item">
+        <div class="log-icon-wrap" style="background:#E6F1FB">💧</div>
+        <div><div class="log-title">Pompe à eau</div><div class="log-sub">0,75 kW · 4 200 L/j max</div></div>
+        <div class="log-amount" style="color:var(--leaf)">✓ Actif</div>
+      </div>
+      <div class="log-item">
+        <div class="log-icon-wrap" style="background:var(--leaf-bg)">🧊</div>
+        <div><div class="log-title">Chambre de conservation</div><div class="log-sub">Temp. actuelle : 8°C · 3 caisses</div></div>
+        <div class="log-amount" style="color:var(--leaf)">✓ OK</div>
+      </div>
+
+      <div class="section-label">Économies cumulées</div>
+      <div class="metric-row">
+        <div class="metric-card full leaf">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div class="metric-label" style="color:#3B6D11">Diesel économisé depuis janvier</div>
+              <div class="metric-value" style="color:#27500A;font-size:24px">127 500 AOA</div>
+              <div class="metric-sub" style="color:var(--leaf)">Soit 3 mois de leasing offerts</div>
+            </div>
+            <div style="font-size:28px">💰</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Historique financier</div>
+
+      <div class="log-item">
+        <div class="log-icon-wrap" style="background:var(--leaf-bg)">☀️</div>
+        <div><div class="log-title">Économie diesel — mars</div><div class="log-sub">Diesel non acheté · 31 mars</div></div>
+        <div class="log-amount good">+42 500</div>
+      </div>
+      <div class="log-item">
+        <div class="log-icon-wrap" style="background:#E6F1FB">📲</div>
+        <div><div class="log-title">Paiement leasing</div><div class="log-sub">Unitel Money · 7 mars</div></div>
+        <div class="log-amount bad">−8 500</div>
+      </div>
+      <div class="log-item">
+        <div class="log-icon-wrap" style="background:var(--leaf-bg)">☀️</div>
+        <div><div class="log-title">Économie diesel — fév.</div><div class="log-sub">Diesel non acheté · 28 fév.</div></div>
+        <div class="log-amount good">+42 500</div>
+      </div>
+      <div class="log-item">
+        <div class="log-icon-wrap" style="background:#E6F1FB">📲</div>
+        <div><div class="log-title">Paiement leasing</div><div class="log-sub">Unitel Money · 7 fév.</div></div>
+        <div class="log-amount bad">−8 500</div>
+      </div>
+
+      <div class="section-label">Témoignage voisin</div>
+      <div class="alert-card info" style="margin-bottom:14px">
+        <div class="alert-icon">👨‍🌾</div>
+        <div>
+          <div class="alert-title">João M. · Caála · 0,8 ha</div>
+          <div class="alert-body">"Depuis le kit AGE, j'économise 45 000 AOA par mois. Mes tomates ne brûlent plus grâce à l'irrigation automatique. Je l'ai recommandé à trois voisins."</div>
+        </div>
+      </div>
+
+      <div class="section-label">Contacter AGE</div>
+      <button class="big-btn earth" style="margin-bottom:8px" onclick="alert('WhatsApp AGE : +244 9XX XXX XXX')">WhatsApp AGE</button>
+      <button class="big-btn outline" onclick="alert('Appel au +244 9XX XXX XXX')">Appeler un technicien</button>
+
+    </div>
+
+  </div>
+
+  <nav class="nav-bar">
+    <button class="nav-btn active" id="nav-home" onclick="goTo('home')">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Accueil</span>
+    </button>
+    <button class="nav-btn" id="nav-leasing" onclick="goTo('leasing')">
+      <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>Leasing</span>
+    </button>
+    <button class="nav-btn" id="nav-parcelle" onclick="goTo('parcelle')">
+      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 000 20"/><path d="M12 2c2.5 5 2.5 10 0 20"/><path d="M2 12h20"/><path d="M12 2c-2.5 5-2.5 10 0 20"/></svg>
+      <span>Parcelle</span>
+    </button>
+    <button class="nav-btn" id="nav-compte" onclick="goTo('compte')">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Compte</span>
+    </button>
+  </nav>
+
+</div>
+</div>
+
+<script>
+function goTo(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+tab).classList.add('active');
+  document.getElementById('nav-'+tab).classList.add('active');
+  var pm=document.getElementById('pay-modal');
+  var ps=document.getElementById('pay-success');
+  if(pm) pm.style.display='none';
+  if(ps) ps.style.display='none';
+  var btn=document.getElementById('pay-btn');
+  if(btn){btn.disabled=false;btn.style.opacity='';btn.style.cursor='';}
+}
+
+function showPayModal(){
+  var m=document.getElementById('pay-modal');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+
+function confirmPay(){
+  document.getElementById('pay-modal').style.display='none';
+  document.getElementById('pay-success').style.display='block';
+  var btn=document.getElementById('pay-btn');
+  if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.style.cursor='default';}
+}
+
+function updatePayLabel(){
+  var m=document.getElementById('pay-method').value;
+  var l=document.getElementById('pay-num-label');
+  var i=document.getElementById('pay-num');
+  if(m==='bai'){l.textContent='Numéro de compte BAI Directo';i.placeholder='IBAN ou nº compte';}
+  else{l.textContent='Numéro Unitel Money';i.placeholder='924 XXX XXX';}
+}
+
+function addVente(){
+  var c=document.getElementById('vente-culture').value;
+  var kg=parseFloat(document.getElementById('vente-kg').value);
+  var aoa=parseFloat(document.getElementById('vente-aoa').value);
+  if(!c||!kg||kg<=0||!aoa||aoa<=0){alert('Merci de remplir tous les champs.');return;}
+  var emojis={Tomates:'🍅',Choux:'🥬',Oignons:'🧅','Maïs':'🌽',Haricots:'🫘'};
+  var colors={Tomates:'#FFF5E6',Choux:'#EAF5E6',Oignons:'#E6F1FB','Maïs':'#FAEEDA',Haricots:'#EAF5E6'};
+  var today=new Date();
+  var dateStr=today.getDate()+' '+['jan.','fév.','mars','avril','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][today.getMonth()]+' '+today.getFullYear();
+  var el=document.createElement('div');el.className='log-item';
+  el.innerHTML='<div class="log-icon-wrap" style="background:'+(colors[c]||'#EAF5E6')+'">'+(emojis[c]||'🌿')+'</div><div><div class="log-title">'+c+' — marché Caála</div><div class="log-sub">'+kg.toFixed(0)+' kg · '+dateStr+'</div></div><div class="log-amount good">+'+Math.round(aoa).toLocaleString('fr-FR')+'</div>';
+  document.getElementById('ventes-list').appendChild(el);
+  document.getElementById('vente-culture').value='';
+  document.getElementById('vente-kg').value='';
+  document.getElementById('vente-aoa').value='';
+}
+
+function addCulture(){
+  var c=document.getElementById('new-culture').value;
+  var h=parseFloat(document.getElementById('new-ha').value);
+  if(!c||!h||h<=0){alert('Merci de remplir le type et une surface valide (> 0).');return;}
+  var emojis={Tomates:'🍅',Choux:'🥬',Oignons:'🧅','Maïs':'🌽',Haricots:'🫘',Autre:'🌿'};
+  var colors={Tomates:'#FFF5E6',Choux:'#EAF5E6',Oignons:'#E6F1FB','Maïs':'#FAEEDA',Haricots:'#EAF5E6',Autre:'#F1EFE8'};
+  var el=document.createElement('div');
+  el.className='log-item';
+  var iconWrap=document.createElement('div');
+  iconWrap.className='log-icon-wrap';
+  iconWrap.style.background=colors[c]||'#EAF5E6';
+  iconWrap.textContent=emojis[c]||'🌿';
+  var info=document.createElement('div');
+  var title=document.createElement('div');
+  title.className='log-title';
+  title.textContent=c;
+  var sub=document.createElement('div');
+  sub.className='log-sub';
+  sub.textContent=h.toFixed(1)+' ha · semé aujourd\'hui';
+  info.appendChild(title);
+  info.appendChild(sub);
+  var badge=document.createElement('div');
+  badge.className='log-amount good';
+  badge.textContent='Nouveau';
+  el.appendChild(iconWrap);
+  el.appendChild(info);
+  el.appendChild(badge);
+  document.getElementById('cultures-list').appendChild(el);
+  document.getElementById('new-culture').value='';
+  document.getElementById('new-ha').value='';
+  document.getElementById('new-date').value='';
+}
+</script>
+</body>
+</html>
